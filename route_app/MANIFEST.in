@@ -1,0 +1,3 @@
+include route_app/config/deployment.ini_tmpl
+recursive-include route_app/public *
+recursive-include route_app/templates *
