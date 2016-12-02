@@ -23,6 +23,7 @@ class SafeControllerController(BaseController):
     def index(self):
 	global path_count
 	path_count = 1
+        log.info("Trying...")
         maps = self.init_google_maps('AIzaSyAF8n02MUVzzlMriqUMYb7rlSkaeBW1qDs')
         if not maps:
             log.info("Please Check Your API Key...")
