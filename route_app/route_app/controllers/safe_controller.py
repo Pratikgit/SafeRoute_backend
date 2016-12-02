@@ -6,11 +6,10 @@ import json
 
 from pylons import request, response, session, tmpl_context as c, url
 from pylons.controllers.util import abort, redirect
-from safe_route.model.safe_model import safe_model
+from route_app.model.safe_model import *
 from hashlib import md5
-from pprint import pprint
 
-from safe_route.lib.base import BaseController, render
+from route_app.lib.base import BaseController, render
 
 log = logging.getLogger(__name__)
 
@@ -21,9 +20,7 @@ class SafeControllerController(BaseController):
     a = safe_model()
 
     def index(self):
-	global path_count
 	path_count = 1
-        log.info("Trying...")
         maps = self.init_google_maps('AIzaSyAF8n02MUVzzlMriqUMYb7rlSkaeBW1qDs')
         if not maps:
             log.info("Please Check Your API Key...")
@@ -35,8 +32,7 @@ class SafeControllerController(BaseController):
 
 	for route in all_routes.get('routes'):
 	   pathScore = self.fetchPathsInfoFromDB(route)	
-           print "Safe Score of Path  " , path_count, " : "
-	   pprint(pathScore)
+           log.info("Safe Score of Path %s:%s" %(path_count, pathScore))
 	   path_count = path_count + 1
 
         return json.dumps(all_routes)
@@ -55,19 +51,14 @@ class SafeControllerController(BaseController):
         return {'routes': polyline_string_list}
 
     def fetchPathsInfoFromDB(self, route):
-        global resultValue
-        crimeCount = None
-	accidentCount = None
-	policeCount = None
 	resultValue = None
         m = hashlib.md5()
         m.update(route.encode('utf-8'))
         search_id =  m.hexdigest()
-        print "Path ID to be searched (md5)", search_id
+        log.info("Path ID to be searched (md5):%s" %search_id)
 
         c = a.findPathDetailsByID("mongodb://localhost","SAFE_ROUTE_DB","Paths_Info", str(search_id))
         for j in c:
-            print j
 	    crimeCount = j['crime_count']
 	    accidentCount = j['accident_count']
 	    policeCount = j['hospital_police_services']
@@ -75,22 +66,7 @@ class SafeControllerController(BaseController):
 
         return resultValue
      
-    def weightedAverage(self, crimeCount, accidentCount, policeCount):
-	global crimeFactorWeightage, accidentFactorWeightage, policeFactorWeightage, resultValue
-        
-	test = a.findFactorWeightage("mongodb://localhost","SAFE_ROUTE_DB","Factors_Weightage", "Crime")
-        for i in test:
-            crimeFactorWeightage =  i['weightage']
+    def weightedAverage(self, crimeCount, accidentCount, policeCount):	
+	return ((crimeCount * CRIME_FACTOR_WEIGHTAGE) + (accidentCount * ACCIDENT_FACTOR_WEIGHTAGE) 
+                    - (policeCount * ROAD_FACILITY_WEIGHTAGE)) / 3
 
-	test = a.findFactorWeightage("mongodb://localhost","SAFE_ROUTE_DB","Factors_Weightage", "Accident")
-        for i in test:
-            accidentFactorWeightage =  i['weightage']
-
-	test = a.findFactorWeightage("mongodb://localhost","SAFE_ROUTE_DB","Factors_Weightage", "Police and Health Services")
-        for i in test:
-            policeFactorWeightage =  i['weightage']
-	
-	resultValue = ((crimeCount*crimeFactorWeightage) + (accidentCount*accidentFactorWeightage) + (policeCount*policeFactorWeightage))/3
-	#print "Crime: ", crimeFactorWeightage, "Accident: ", accidentFactorWeightage, "Police and Health: ", policeFactorWeightage
-
-	return resultValue

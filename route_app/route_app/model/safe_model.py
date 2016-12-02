@@ -1,6 +1,10 @@
 import pymongo
 from pymongo import MongoClient
 
+CRIME_FACTOR_WEIGHTAGE = 0.5
+ACCIDENT_FACTOR_WEIGHTAGE = 0.3
+ROAD_FACILITY_WEIGHTAGE = 0.2
+
 class safe_model():
     def __init__(self):
         pass
@@ -17,18 +21,6 @@ class safe_model():
             print "Unexpected error:", type(e), e
         return cursor
   
-    def findFactorWeightage(self,host,db,collection,search_id):
-        hconn = self.getConnection(host)
-        hdb = self.getDBDetails(hconn, db)
-        hcoll = self.getCollectionDetails(hdb, collection)
-
-        query = {"factor_name" : search_id}
-        try:
-            cursor = hcoll.find(query, {"weightage":1, "_id":0})
-        except Exception as e:
-            print "Unexpected error:", type(e), e
-        return cursor
-
     def getConnection(self,host):
         try:
             retConnection = MongoClient(host)
