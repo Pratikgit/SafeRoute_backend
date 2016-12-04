@@ -3,6 +3,7 @@ import hashlib
 import polyline
 import googlemaps
 import json
+from pymongo import MongoClient
 
 from pylons import request, response, session, tmpl_context as c, url
 from pylons.controllers.util import abort, redirect
@@ -33,6 +34,18 @@ class SafeControllerController(BaseController):
         route_distance_map = dict(zip(path_score_dict.get('path_array'), all_routes.get('distance_array')))
         route_safe_map = dict(zip(path_score_dict.get('path_array'), path_score_dict.get('score_array')))
         
+        for path,safe_score in route_safe_map.iteritems():
+            if safe_score == 0:
+                client = MongoClient('localhost', 27017)
+                db = client.SAFE_ROUTE_DB
+                index = path_score_dict.get('path_array').index(path)
+                polyline = all_routes.get('routes')[index]
+                data = {'path_id': path,
+                        'polyline': polyline}
+                path_cache = db.Path_Cache
+                record_id = path_cache.insert_one(data)
+                log.info("Path Cached:%s" %record_id)
+
         log.info("Route Safe Map:%s" %route_safe_map)
         log.info("Route Distance Map:%s" %route_distance_map)
         
