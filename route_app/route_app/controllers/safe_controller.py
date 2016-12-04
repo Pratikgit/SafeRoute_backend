@@ -64,9 +64,10 @@ class SafeControllerController(BaseController):
 
         #Delete worst path
         max_path_tuple = max(route_safe_map.items(), key = lambda x: x[1])
-        route_distance_map.pop(max_path_tuple[0])
-        route_safe_map.pop(max_path_tuple[0])
-        final_route_list.append(max_path_tuple[0])
+        if max_path_tuple[1] != 0:
+            route_distance_map.pop(max_path_tuple[0])
+            route_safe_map.pop(max_path_tuple[0])
+            final_route_list.append(max_path_tuple[0])
 
         #Compare and remove paths whoose safe score is double to any other score
         for route,score in route_safe_map.iteritems():
